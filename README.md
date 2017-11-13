@@ -47,3 +47,6 @@ target.txt and background.txt contain the target gene list and
 the background gene list, respectively.
 
 output.txt is the name of the file where the results will be stored.
+The output contains the following fields:
+
+GO_TERM ADJUSTED_PVALUE ENRICHMENT_SCORE
