@@ -30,7 +30,7 @@ USAGE
 To perform enrichment analysis calculations, run the "enrich" program
 as follows:
 
-./enrich -a data/annHuman20171106.txt -e edgeList.txt
+./enrich -a data/annHuman20171106.txt -e data/edgeList.txt
          -t data/target.txt -b data/background.txt -o output.txt
 
 The annHuman20171106.txt contains Gene Ontology annotations
