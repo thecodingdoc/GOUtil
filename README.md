@@ -64,8 +64,13 @@ docker-compose run enrich g++ -O3 -o enrich enrich.C utilities.C --std=gnu++11
 ```
 
 ### Run with Docker
-To run with the default parameters
+To run with the default parameters:
 
+```bash
+docker-compose run enrich
+```
+
+to provide alternate parameters:
 ```bash
 docker-compose run enrich ./enrich -a data/annHuman20171106.txt -e data/edgeList.txt -t data/target.txt -b data/background.txt -o output.txt
 ```
