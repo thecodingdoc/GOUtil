@@ -77,6 +77,13 @@ char *getCmdOption(char **, char **, const string &);
 void doEnrichment(unsigned int, unsigned int, Graph,
 		  vector<vector<string> >, vector<vector<string> >,
 		  EnrichedTerms &);
-void findAllAncestors(set<unsigned int> &, set<unsigned int> &, Graph);
+void findAllAncestors(set<unsigned int> &, set<unsigned int> &, Graph &);
 void storeSet(set<string> &, string);
+void storeTermCentricAnn(set<string>,
+			 vector<vector<string> > &,
+			 vector<vector<string> > &, string,
+                         unordered_map<string, unsigned int>,
+			 set<string> target);
+
+
 
