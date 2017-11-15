@@ -55,8 +55,9 @@ GO_TERM ADJUSTED_PVALUE ENRICHMENT_SCORE
 A containerized version of the runtime is also provided using docker.
 
 ### Install with docker
-Install [Docker](https://www.docker.com/get-docker)
-Run the following:
+- Install [Docker](https://www.docker.com/get-docker)
+- Run the following:
+
 ```bash
 docker-compose build
 docker-compose run enrich g++ -O3 -o enrich enrich.C utilities.C --std=gnu++11
