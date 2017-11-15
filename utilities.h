@@ -31,15 +31,10 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS,
 // PROTOTYPES                                                       //
 //////////////////////////////////////////////////////////////////////
 
-void buildGraph(Graph &, unordered_map<string, unsigned int>, string);
+void buildGraph(Graph &, unordered_map<string, unsigned int> &, string);
+void buildHashTable(string, unordered_map<string, unsigned int> &,
+		    unordered_map<unsigned int, string> &);
 bool cmdOptionExists(char **, char **, const std::string &);
-void findChildren(unsigned int, set<unsigned int> &, Graph);
+void findChildren(unsigned int, set<unsigned int> &, Graph &);
 char *getCmdOption(char **, char **, const std::string &);
 unordered_map<string, unsigned int> getNodeHash(set<string>);
-void storeTermCentricAnn(set<string>,
-			 vector<vector<string> > &,
-			 vector<vector<string> > &,
-			 string,
-                         unordered_map<string, unsigned int>,
-			 set<string> target);
-

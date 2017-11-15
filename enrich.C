@@ -40,49 +40,6 @@ using namespace std;
 // DEFINITIONS                                                      //
 //////////////////////////////////////////////////////////////////////
 
-void buildHashTable(string fileName,
- 		    unordered_map<string, unsigned int> &nodeHash,
-		    unordered_map<unsigned int, string> &revNodeHash)
-{
-  // assign a unique integer to each node name
-  
-  unsigned int value = 0;
-
-  string line, node1, node2;
-
-  // open the input file
-  fstream infile;
-  infile.open(fileName, fstream::in);
-
-  // complain if the file doesn't exist
-  if (! infile.good()) {
-    cerr << "Can't open " << fileName << endl;
-    exit(1);
-  }
-
-  // process each edge
-  while (getline(infile, line)) {
-    istringstream iss(line);
-    iss >> node1; iss >> node2;
-
-    if (!nodeHash.count(node1)) {
-      nodeHash[node1] = value;
-      revNodeHash[value] = node1;
-      value++;
-    }
-
-    if (!nodeHash.count(node2)) {
-      nodeHash[node2] = value;
-      revNodeHash[value] = node2;
-      value++;
-    }
-  }
-
-  infile.close();
-}
-
-//////////////////////////////////////////////////////////////////////
-
 void calculateBackgroundFreq(vector<unsigned int> &backgroundFreq,
 			     vector<unsigned int> &targetFreq,
 			     vector<vector<string> > termCentric,
@@ -333,7 +290,6 @@ void storeSet(set<string> &genes, string fileName)
 
 //////////////////////////////////////////////////////////////////////
 
-
 Parameters::Parameters(char **argv, int argc)
 {
   // parse the command-line arguments
@@ -343,6 +299,61 @@ Parameters::Parameters(char **argv, int argc)
   backgroundSetFileName = getCmdOption(argv, argv + argc, "-b");
   targetSetFileName = getCmdOption(argv, argv + argc, "-t");
   outFileName = getCmdOption(argv, argv + argc, "-o");
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void storeTermCentricAnn(set<string> background,
+			 vector<vector<string> > &termCentric,
+			 vector<vector<string> > &termCentricTarget,
+			 string annFileName,
+                         unordered_map<string, unsigned int> nodeHash,
+			 set<string> target)
+{
+
+  string line;
+
+  // open the input file
+  fstream termFile;
+  termFile.open(annFileName, fstream::in);
+
+  // complain if the file doesn't exist
+  if (! termFile.good()) {
+    cerr << "Can't open " << annFileName << endl;
+    exit(1);
+  }
+
+  // process each gene
+  while (getline(termFile, line)) {
+    vector<string> tokens;
+    istringstream iss(line);
+
+    string gene;
+    iss >> gene;
+
+    // check if gene is in the background set
+    const bool isInBack = background.find(gene) != background.end();
+
+    if (isInBack) {
+      // check if gene is in the target set
+      const bool isInTarget = target.find(gene) != target.end();
+
+      do {
+	string term;
+	iss >> term;
+	if (term != "") {
+          if (isInTarget) {
+	    termCentricTarget[nodeHash[term]].push_back(gene);
+	  }
+	  termCentric[nodeHash[term]].push_back(gene);
+	}
+      }
+      while (iss);
+    }
+  }
+  
+  // close the file
+  termFile.close();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -394,7 +405,6 @@ int main(int argc, char **argv)
 
   // print the results
   enrichTerms.printResults(p.outFileName);
-
-  
+ 
   return 0;
 }
