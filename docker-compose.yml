@@ -2,6 +2,6 @@ version: "3"
 services:
   boost:
     build: .
-    command: ./enrich -a data/annHuman20171106.txt -e edgeList.txt -t data/target.txt -b data/background.txt -o output.txt
+    command: ./enrich -a data/annHuman20171106.txt -e data/edgeList.txt -t data/target.txt -b data/background.txt -o output.txt
     volumes:
-      - ./data:/data
+      - ./:/GOUtil

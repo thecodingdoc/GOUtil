@@ -7,7 +7,9 @@
 # Pull base image.
 FROM alpine:latest
 
+
 # Install Boost
+
 RUN \
   apk add --no-cache --virtual .build-deps g++ make curl linux-headers python-dev \
   && curl -SL "http://downloads.sourceforge.net/project/boost/boost/1.62.0/boost_1_62_0.tar.bz2?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.62.0%2F&ts=$(date +%s)&use_mirror=superb-sea2" \
@@ -20,3 +22,8 @@ RUN \
   && ./b2 install \
   && cd .. \
   && rm -rf boost_1_62_0.tar.bz2 boost_1_62_0
+
+RUN apk update
+RUN apk upgrade
+RUN apk add bash
+WORKDIR /GOUtil
