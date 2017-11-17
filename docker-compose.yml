@@ -1,0 +1,7 @@
+version: "3"
+services:
+  enrich:
+    build: .
+    command: ./enrich -a data/annHuman20171106.txt -e data/edgeList.txt -t data/target.txt -b data/background.txt -o output.txt
+    volumes:
+      - ./:/GOUtil
