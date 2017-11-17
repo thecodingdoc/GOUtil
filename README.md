@@ -1,5 +1,5 @@
-# GOUtil v0.1 -- 11/12/17
-Copyright (c) 2017  Dario Ghersi.
+# GOUtil v0.1.1 -- 11/17/17
+Copyright (c) 2017  Dario Ghersi, Matt L. Hale.
 
 ## Purpose
 
@@ -16,12 +16,20 @@ The Boost library can be found at:
 
 [http://www.boost.org](http://www.boost.org)
 
-To compile the suite with the GCC compiler,
+To compile the enrichment program with the GCC compiler,
 run the following command:
 
 ```bash
 g++ -O3 -o enrich enrich.C utilities.C --std=gnu++11
 ```
+
+The semantic similarity program can be compiled by running
+the following command:
+
+```bash
+g++ -O3 -o funSim funSim.C utilities.C --std=gnu++11
+```
+
 
 ## Usage
 To perform enrichment analysis calculations, run the `enrich` program as follows:
@@ -50,6 +58,18 @@ The output contains the following fields:
 ```text
 GO_TERM ADJUSTED_PVALUE ENRICHMENT_SCORE
 ```
+
+The suite also contains a program to calculate the semantic similarity between
+pairs of Gene Ontology terms, using either the Lin or the Resnik index.
+To run the calculations, use the following command:
+
+```bash
+./funSim -a data/annHuman20171106.txt -e data/edgeList.txt -o output.txt -t INDEX_TYPE
+```
+
+where INDEX_TYPE is one of [Lin, Resnik].
+
+
 
 ## Docker
 A containerized version of the runtime is also provided using docker.
