@@ -7,7 +7,7 @@
 # It parses the go.obo file to output all the relations in a given    #
 # namespace. (one of biological_process or molecular_function or      #
 # cellular_component).                                                #
-# Saves 'is_a', 'part_of', and 'has_part' relations.                  #    
+# Saves is_a, part_of, and has_part relations.                        #
 #######################################################################
 
 import pronto
@@ -24,12 +24,12 @@ obofile, namespace, output = sys.argv[1:4]
 ## read the obo file
 go = pronto.Ontology(obofile)
 edgelist = []
-count = 0
 ## iterate over each term and find its parents and save the pairs
 for term in go:
     if term.other['namespace'][0] == namespace:
         for parent in term.parents:
-            edge = term.id + " " + parent.id
+            words = [term.id, term.name, parent.id, parent.name]
+            edge = '\t'.join(words)
             if edge not in edgelist: edgelist.append(edge)
 
 
