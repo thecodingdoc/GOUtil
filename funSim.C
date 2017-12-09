@@ -249,7 +249,8 @@ int main(int argc, char **argv)
   // build a hash table with term->index relationship
   unordered_map<string, unsigned int> nodeHash;
   unordered_map<unsigned int, string> revNodeHash;
-  buildHashTable(p.edgesFileName, nodeHash, revNodeHash);
+  unordered_map<unsigned int, string> definition;
+  buildHashTable(p.edgesFileName, nodeHash, revNodeHash, definition);
 
   // build the ontology graph
   Graph goG(nodeHash.size());
