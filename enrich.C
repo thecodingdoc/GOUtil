@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////
 // GOUtil.C  Copyright (c) 2017 Dario Ghersi                        //
-// Version: 20171112                                                //
+// Version: 20171209                                                //
 // Goal: Enrichment Analysis tools                                  //    
 // Usage: GOUtil -e EDGE_LIST -a ANNOTATIONS -b BACKGROUND          //
 //               -t TARGET -o OUTFILE [-u]                          //
@@ -22,6 +22,7 @@
 // If not, see <http://www.gnu.org/licenses/>.                      //
 //////////////////////////////////////////////////////////////////////
 
+#include <cstring>
 #include <iostream>
 #include <fstream>
 #include <iterator>
@@ -44,7 +45,9 @@ void calculateBackgroundFreq(vector<unsigned int> &backgroundFreq,
 			     vector<unsigned int> &targetFreq,
 			     vector<vector<string> > termCentric,
                              vector<vector<string> > termCentricTarget,
-			     Graph goG)
+			     Graph goG,
+			     unordered_map<unsigned int, set<string> >
+			     &withTerm)
 {
 
   // initialize the frequency to 0
@@ -92,7 +95,7 @@ void calculateBackgroundFreq(vector<unsigned int> &backgroundFreq,
     }
     backgroundFreq[*it] = backWithTerm.size();
     targetFreq[*it] += targetWithTerm.size();
-
+    withTerm[*it] = targetWithTerm;
   }
 }
 
@@ -122,6 +125,10 @@ void checkCommandLineArgs(char **argv, int argc)
   }
   if (!cmdOptionExists(argv, argv+argc, "-o")) {
     cerr << "Output file missing\n";
+    err = true;
+  }
+  if (!cmdOptionExists(argv, argv+argc, "-p")) {
+    cerr << "FDR threshold missing\n";
     err = true;
   }
  
@@ -155,7 +162,7 @@ void doEnrichment(unsigned int targetSize,
   vector<unsigned int> backgroundFreq(termCentric.size());
   vector<unsigned int> targetFreq(termCentric.size());
   calculateBackgroundFreq(backgroundFreq, targetFreq, termCentric,
-			  termCentricTarget, goG);
+			  termCentricTarget, goG, enrichTerms.withTerm);
 
   // perform the hypergeometric calculations for each term
   for (unsigned int i = 0; i < targetFreq.size(); i++) {
@@ -181,8 +188,7 @@ void doEnrichment(unsigned int targetSize,
       }
 
     }
-  }
-  
+  } 
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -239,7 +245,9 @@ void EnrichedTerms::fdrCorrection()
 
 //////////////////////////////////////////////////////////////////////
 
-void EnrichedTerms::printResults(string outFileName)
+void EnrichedTerms::printResults(string outFileName, double threshold,
+				 unordered_map<unsigned int, string>
+				 &definition)
 {
   // print the results of the enrichment analysis using the
   // following format:
@@ -252,9 +260,27 @@ void EnrichedTerms::printResults(string outFileName)
 
   // print the results
   for (unsigned int i = 0; i < sortedOrder.size(); i++) {
-    outFile << termID[sortedOrder[i]] << "\t" <<
-      adjustedP[sortedOrder[i]] << "\t" <<
-      enrichFactor[sortedOrder[i]] << endl;
+    if (adjustedP[sortedOrder[i]] <= threshold) {
+      outFile << termID[sortedOrder[i]] << "\t" <<
+	definition[termIndex[sortedOrder[i]]] << "\t" <<
+	adjustedP[sortedOrder[i]] << "\t" <<
+	enrichFactor[sortedOrder[i]] << "\t";
+
+      // print the genes contributing to the enrichment
+      bool isFirst = true;
+      for (set<string>::iterator it =
+	     withTerm[termIndex[sortedOrder[i]]].begin();
+	   it != withTerm[termIndex[sortedOrder[i]]].end(); it++) {
+	if (isFirst) {
+	  isFirst = false;
+	  outFile << *it;
+	}
+	else {
+	  outFile << " " << *it;
+	}
+      }
+      outFile << endl;
+    }
   }
   
   // close the output file
@@ -299,6 +325,7 @@ Parameters::Parameters(char **argv, int argc)
   backgroundSetFileName = getCmdOption(argv, argv + argc, "-b");
   targetSetFileName = getCmdOption(argv, argv + argc, "-t");
   outFileName = getCmdOption(argv, argv + argc, "-o");
+  threshold = stod(getCmdOption(argv, argv + argc, "-p"));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -380,7 +407,8 @@ int main(int argc, char **argv)
   // build a hash table with term->index relationship
   unordered_map<string, unsigned int> nodeHash;
   unordered_map<unsigned int, string> revNodeHash;
-  buildHashTable(p.edgesFileName, nodeHash, revNodeHash);
+  unordered_map<unsigned int, string> definition;
+  buildHashTable(p.edgesFileName, nodeHash, revNodeHash, definition);
   
   // build the ontology graph
   Graph goG(nodeHash.size());
@@ -398,13 +426,14 @@ int main(int argc, char **argv)
   EnrichedTerms enrichTerms;
   doEnrichment(targetSet.size(), backgroundSet.size(), goG,
 	       termCentricAnn, termCentricAnnTarget, enrichTerms);
-
+  
   // assign term ID, definitions, and perform FDR correction
   enrichTerms.addID(revNodeHash);
   enrichTerms.fdrCorrection();
 
+  
   // print the results
-  enrichTerms.printResults(p.outFileName);
+  enrichTerms.printResults(p.outFileName, p.threshold, definition);
  
   return 0;
 }

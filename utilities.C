@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////
 // utilities.C  Copyright (c) 2017 Dario Ghersi                     //
-// Version: 20171212                                                //
+// Version: 20171209                                                //
 // Goal:    utility functions                                       //
 //                                                                  //
 // This file is part of the GOUtil suite.                           //
@@ -40,7 +40,7 @@ void buildGraph(Graph &goG, unordered_map<string, unsigned int> &nodeHash,
 		string fileName)
 {
 
-  string line, node1, node2;
+  string line, node1, node2, temp;
   
   // open the input file
   fstream infile;
@@ -54,8 +54,9 @@ void buildGraph(Graph &goG, unordered_map<string, unsigned int> &nodeHash,
 
   // process each edge
   while (getline(infile, line)) {
-    istringstream iss(line);
-    iss >> node1; iss >> node2;
+    stringstream linestream(line);
+    getline(linestream, node1, '\t'); getline(linestream, temp, '\t');
+    getline(linestream, node2, '\t'); getline(linestream, temp, '\t');
 
     boost::add_edge(nodeHash[node1], nodeHash[node2], goG);
   }
@@ -67,13 +68,14 @@ void buildGraph(Graph &goG, unordered_map<string, unsigned int> &nodeHash,
 
 void buildHashTable(string fileName,
  		    unordered_map<string, unsigned int> &nodeHash,
-		    unordered_map<unsigned int, string> &revNodeHash)
+		    unordered_map<unsigned int, string> &revNodeHash,
+		    unordered_map<unsigned int, string> &definition)
 {
   // assign a unique integer to each node name
   
   unsigned int value = 0;
 
-  string line, node1, node2;
+  string line, node1, node2, def1, def2, data;
 
   // open the input file
   fstream infile;
@@ -87,18 +89,21 @@ void buildHashTable(string fileName,
 
   // process each edge
   while (getline(infile, line)) {
-    istringstream iss(line);
-    iss >> node1; iss >> node2;
+    stringstream linestream(line);
+    getline(linestream, node1, '\t'); getline(linestream, def1, '\t');
+    getline(linestream, node2, '\t'); getline(linestream, def2, '\t');
 
     if (!nodeHash.count(node1)) {
       nodeHash[node1] = value;
       revNodeHash[value] = node1;
+      definition[value] = def1;
       value++;
     }
 
     if (!nodeHash.count(node2)) {
       nodeHash[node2] = value;
       revNodeHash[value] = node2;
+      definition[value] = def2;
       value++;
     }
   }

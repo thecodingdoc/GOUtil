@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////
 // GOUtil.h  Copyright (c) 2017 Dario Ghersi                        //
-// Version: 20171112                                                //
+// Version: 20171209                                                //
 //                                                                  //
 // This file is part of the GOUtil suite.                           //
 // GOUtil is free software: you can redistribute it and/or          //
@@ -23,7 +23,7 @@
 // CONSTANTS                                                        //
 //////////////////////////////////////////////////////////////////////
 
-const string USAGE = "\nUsage:\nGOUtil -e EDGE_LIST -a ANNOTATIONS -b BACKGROUND -t TARGET -o OUTFILE [-u]\n";
+const string USAGE = "\nUsage:\nGOUtil -e EDGE_LIST -a ANNOTATIONS -b BACKGROUND -t TARGET -o OUTFILE -p FDR_THRESHOLD\n";
 
 //////////////////////////////////////////////////////////////////////
 // CLASSES, STRUCTS, AND TYPEDEFS                                   //
@@ -39,10 +39,12 @@ class EnrichedTerms {
   vector<double> adjustedP;
   vector<double> enrichFactor;
   vector<unsigned int> sortedOrder;
+  unordered_map<unsigned int, set<string> > withTerm;
 
   void addID(unordered_map<unsigned int, string>);
   void fdrCorrection();
-  void printResults(string);
+  void printResults(string, double,
+		    unordered_map<unsigned int, string> &);
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -55,6 +57,7 @@ class Parameters {
   string backgroundSetFileName;
   string targetSetFileName;
   string outFileName;
+  double threshold;
 
   Parameters(char **, int);
 };
@@ -71,7 +74,8 @@ void calculateBackgroundFreq(vector<unsigned int> &,
 			     vector<unsigned int> &,
 			     vector<vector<string> >,
                              vector<vector<string> >,
-			     Graph);
+			     Graph,
+			     unordered_map<unsigned int, set<string> > &);
 bool cmdOptionExists(char **, char **, const string &);
 char *getCmdOption(char **, char **, const string &);
 void doEnrichment(unsigned int, unsigned int, Graph,
