@@ -276,13 +276,17 @@ int main(int argc, char **argv)
   outFile.open(p.outFileName, fstream::out);
   outFile << std::scientific;
   for (unsigned int i = 0; i < IC.size() - 1; i++) {
+    if (IC[i] <= 0) {
+      continue;
+    }
     cout << i << endl;
     for (unsigned int j = i + 1; j < IC.size(); j++) {
-      double semSim = semanticSim(IC, goG, i, j, p.indexType);
-      if (semSim > 0) {
-        outFile << revNodeHash[i] << "\t" << revNodeHash[j] << "\t" <<
-	  semSim << endl;
+      if (IC[j] <= 0) {
+	continue;
       }
+      double semSim = semanticSim(IC, goG, i, j, p.indexType);
+      outFile << revNodeHash[i] << "\t" << revNodeHash[j] << "\t" <<
+	semSim << endl;
     }
   }
 
