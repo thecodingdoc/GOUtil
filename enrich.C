@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////
 // GOUtil.C  Copyright (c) 2017 Dario Ghersi                        //
-// Version: 20171209                                                //
+// Version: 20171211                                                //
 // Goal: Enrichment Analysis tools                                  //    
 // Usage: GOUtil -e EDGE_LIST -a ANNOTATIONS -b BACKGROUND          //
 //               -t TARGET -o OUTFILE [-u]                          //
@@ -330,13 +330,16 @@ Parameters::Parameters(char **argv, int argc)
 
 //////////////////////////////////////////////////////////////////////
 
-void storeTermCentricAnn(set<string> background,
+void storeTermCentricAnn(set<string> &background,
 			 vector<vector<string> > &termCentric,
 			 vector<vector<string> > &termCentricTarget,
 			 string annFileName,
                          unordered_map<string, unsigned int> nodeHash,
-			 set<string> target)
+			 set<string> &target)
 {
+  // store the annotations in a term-centric fashion for target and
+  // background.
+  // Filter out non-annotated genes from target set and background set
 
   string line;
 
@@ -351,12 +354,16 @@ void storeTermCentricAnn(set<string> background,
   }
 
   // process each gene
+  set<string> allAnnGenes;
   while (getline(termFile, line)) {
     vector<string> tokens;
     istringstream iss(line);
 
     string gene;
     iss >> gene;
+
+    // add the gene to the set of annotated genes
+    allAnnGenes.insert(gene);
 
     // check if gene is in the background set
     const bool isInBack = background.find(gene) != background.end();
@@ -378,7 +385,23 @@ void storeTermCentricAnn(set<string> background,
       while (iss);
     }
   }
-  
+
+  // insersect the background set with the annotated set
+  set<string> newBackground;
+  set_intersection(background.begin(), background.end(),
+		   allAnnGenes.begin(), allAnnGenes.end(),
+		   inserter(newBackground, newBackground.begin()));
+
+  background = newBackground;
+
+  // insersect the target set with the annotated set
+  set<string> newTarget;
+  set_intersection(target.begin(), target.end(),
+		   allAnnGenes.begin(), allAnnGenes.end(),
+		   inserter(newTarget, newTarget.begin()));
+
+  target = newTarget;
+
   // close the file
   termFile.close();
 }
@@ -431,7 +454,7 @@ int main(int argc, char **argv)
   enrichTerms.addID(revNodeHash);
   enrichTerms.fdrCorrection();
 
-  
+  cout << targetSet.size() << endl;
   // print the results
   enrichTerms.printResults(p.outFileName, p.threshold, definition);
  

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////
 // GOUtil.h  Copyright (c) 2017 Dario Ghersi                        //
-// Version: 20171209                                                //
+// Version: 20171211                                                //
 //                                                                  //
 // This file is part of the GOUtil suite.                           //
 // GOUtil is free software: you can redistribute it and/or          //
@@ -83,11 +83,11 @@ void doEnrichment(unsigned int, unsigned int, Graph,
 		  EnrichedTerms &);
 void findAllAncestors(set<unsigned int> &, set<unsigned int> &, Graph &);
 void storeSet(set<string> &, string);
-void storeTermCentricAnn(set<string>,
+void storeTermCentricAnn(set<string> &,
 			 vector<vector<string> > &,
 			 vector<vector<string> > &, string,
                          unordered_map<string, unsigned int>,
-			 set<string> target);
+			 set<string> &);
 
 
 
