@@ -1,5 +1,5 @@
-# GOUtil v0.1.1 -- 11/17/17
-Copyright (c) 2017  Dario Ghersi, Matt L. Hale.
+# GOUtil v0.2 -- 12/13/17
+Copyright (c) 2017  Dario Ghersi, Matt L. Hale, Ishwor Thapa.
 
 ## Purpose
 
@@ -47,7 +47,8 @@ GENE2 TERM1 TERM3 TERM6 ...
 ...
 ```
 `edgeList.txt` describes the Gene Ontology graph with a list of
-child-parent directed edges.
+child-parent directed edges and is obtained by running the
+`buildEdgeList.py` script on a Gene Ontology obo file.
 
 `target.txt` and background.txt contain the target gene list and
 the background gene list, respectively.
@@ -56,7 +57,7 @@ the background gene list, respectively.
 The output contains the following fields:
 
 ```text
-GO_TERM ADJUSTED_PVALUE ENRICHMENT_SCORE
+GO_TERM GO_DEFINITION ADJUSTED_PVALUE ENRICHMENT_SCORE GENES
 ```
 
 The suite also contains a program to calculate the semantic similarity between
@@ -67,7 +68,9 @@ To run the calculations, use the following command:
 ./funSim -a data/annHuman20171106.txt -e data/edgeList.txt -o output.txt -t INDEX_TYPE
 ```
 
-where INDEX_TYPE is one of [Lin, Resnik].
+where INDEX_TYPE is one of [Lin, Resnik]. If the optional `-f ENRICH_OUTPUT` is passed
+to the program, then `funSim` only computes the semantic similarity between terms in the
+enrichment output.
 
 
 
