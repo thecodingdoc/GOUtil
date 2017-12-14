@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////
 // GOUtil.C  Copyright (c) 2017 Dario Ghersi                        //
-// Version: 20171211                                                //
+// Version: 20171213                                                //
 // Goal: Enrichment Analysis tools                                  //    
 // Usage: GOUtil -e EDGE_LIST -a ANNOTATIONS -b BACKGROUND          //
 //               -t TARGET -o OUTFILE [-u]                          //
@@ -445,6 +445,19 @@ int main(int argc, char **argv)
 		      termCentricAnnTarget, p.annotationsFileName,
   		      nodeHash, targetSet);
 
+  // sanity checks
+  if (backgroundSet.size() < 1) {
+    cerr << "The background set has no genes in it...aborting" << endl;
+    exit(1);
+  }
+  if (targetSet.size() < 1) {
+    cerr << "The target set has no genes in it...aborting" << endl;
+  }
+  if (targetSet.size() > backgroundSet.size()) {
+    cerr << "More genes in the target than in the background...aborting" << endl;
+    exit(1);
+  }
+
   // perform enrichment analysis
   EnrichedTerms enrichTerms;
   doEnrichment(targetSet.size(), backgroundSet.size(), goG,
@@ -454,7 +467,6 @@ int main(int argc, char **argv)
   enrichTerms.addID(revNodeHash);
   enrichTerms.fdrCorrection();
 
-  cout << targetSet.size() << endl;
   // print the results
   enrichTerms.printResults(p.outFileName, p.threshold, definition);
  
