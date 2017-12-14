@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////
 // funSim.C  Copyright (c) 2017 Dario Ghersi                        //
-// Version:  20171214                                               //
+// Version:  20171213                                               //
 // Goal:     semantic similarity functions                          //
 //                                                                  //
 // This file is part of the GOUtil suite.                           //
@@ -38,8 +38,8 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////
 
 void calculateFreq(vector<unsigned int> &freq,
-			     vector<vector<string> > termCentric,
-			     Graph goG)
+		   vector<vector<string> > &termCentric,
+		   Graph goG)
 {
 
   // initialize the frequency to 0
@@ -65,6 +65,115 @@ void calculateFreq(vector<unsigned int> &freq,
     }
     freq[it] = withTerm.size();
   }
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void calculateFreqTarget(vector<unsigned int> &freq,
+			 set<unsigned int> &targetTerms,
+			 vector<vector<string> > &termCentric,
+			 Graph goG)
+{
+  
+  // initialize the frequency to 0
+  for (unsigned int i = 0; i < freq.size(); i++) {
+    freq[i] = 0;
+  }
+
+  // find all ancestors of the target terms
+  set<unsigned int> ancestors;
+  findAllAncestors(targetTerms, ancestors, goG);
+  
+  // calculate the frequency for all terms
+  for (set<unsigned int>::iterator it = ancestors.begin();
+       it != ancestors.end(); it++) {
+    
+    // get all children terms
+    set<unsigned int>children;
+    findChildren(*it, children, goG);
+
+    // calculate the background freq
+    set<string>withTerm;
+
+    for (set<unsigned int>::iterator cit = children.begin();
+	 cit != children.end(); cit++) {
+      
+      copy(termCentric[*cit].begin(), termCentric[*cit].end(),
+	   inserter(withTerm, withTerm.end()));
+    }
+    freq[*it] = withTerm.size();
+  }
+}
+  
+//////////////////////////////////////////////////////////////////////
+
+void calcAllSemSim(string outFileName, string indexType,
+		   vector<double> &IC,
+		   Graph &goG,
+		   unordered_map<unsigned int, string> &revNodeHash)
+{
+  // calculate the pairwise semantic similarity between all pairs
+  // of terms
+
+  // calculate and print the semantic similarity
+  // between pairs of terms
+  fstream outFile;
+  outFile.open(outFileName, fstream::out);
+  outFile << std::scientific;
+    
+  for (unsigned int i = 0; i < IC.size() - 1; i++) {
+    if (IC[i] <= 0) {
+      continue;
+    }
+    cout << i << endl;
+    for (unsigned int j = i + 1; j < IC.size(); j++) {
+      if (IC[j] <= 0) {
+	continue;
+      }
+      double semSim = semanticSim(IC, goG, i, j, indexType);
+      outFile << revNodeHash[i] << "\t" << revNodeHash[j] << "\t" <<
+	semSim << endl;
+    }
+  }
+
+  outFile.close();
+}
+  
+//////////////////////////////////////////////////////////////////////
+
+void calcTargetSemSim(set<unsigned int> &targetTerms,
+		      string outFileName, string indexType,
+		      vector<double> &IC,
+		      Graph &goG, 
+		      unordered_map<unsigned int, string> &revNodeHash)
+{
+  // calculate and print the semantic similarity
+  // between selected pairs of terms
+  
+  fstream outFile;
+  outFile.open(outFileName, fstream::out);
+  outFile << std::scientific;
+
+  vector<unsigned int> targetTermsVec;
+  copy(targetTerms.begin(), targetTerms.end(),
+       back_inserter(targetTermsVec));
+    
+  for (unsigned int i = 0; i < targetTermsVec.size() - 1; i++) {
+    if (IC[targetTermsVec[i]] <= 0) {
+      continue;
+    }
+    for (unsigned int j = i + 1; j < targetTermsVec.size(); j++) {
+      if (IC[targetTermsVec[j]] <= 0) {
+	continue;
+      }
+      double semSim = semanticSim(IC, goG, targetTermsVec[i],
+				  targetTermsVec[j], indexType);
+      outFile << revNodeHash[targetTermsVec[i]] << "\t" <<
+	revNodeHash[targetTermsVec[j]] << "\t" << semSim << endl;
+    }
+  }
+
+  outFile.close();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -118,50 +227,37 @@ void checkCommandLineArgs(char **argv, int argc)
 
 //////////////////////////////////////////////////////////////////////
 
-void storeTermCentricAnn(vector<vector<string> > &termCentric,
-			 string annFileName,
-                         unordered_map<string, unsigned int> nodeHash,
-			 unsigned int &totSize)
+void readEnrich(string enrichFileName,
+		unordered_map<string, unsigned int> &nodeHash,
+		set<unsigned int> &targetTerms)
 {
+  // store the enriched terms
 
   string line;
 
   // open the input file
-  fstream termFile;
-  termFile.open(annFileName, fstream::in);
+  fstream enrichFile;
+  enrichFile.open(enrichFileName, fstream::in);
 
   // complain if the file doesn't exist
-  if (! termFile.good()) {
-    cerr << "Can't open " << annFileName << endl;
+  if (! enrichFile.good()) {
+    cerr << "Can't open " << enrichFileName << endl;
     exit(1);
   }
   
-  // process each gene
-  set <string> allGenes;
-  while (getline(termFile, line)) {
+  // process each term
+  while (getline(enrichFile, line)) {
 
     vector<string> tokens;
     istringstream iss(line);
 
-    string gene;
-    iss >> gene;
+    string term;
+    iss >> term;
 
-    allGenes.insert(gene);
-
-    do {
-      string term;
-      iss >> term;
-      if (term != "") {
-        termCentric[nodeHash[term]].push_back(gene);
-      }
-    }
-    while (iss);
+    targetTerms.insert(nodeHash[term]);
   }
 
-  totSize = allGenes.size();
-  
-  // close the file
-  termFile.close();
+  enrichFile.close();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -218,6 +314,54 @@ double semanticSim(vector<double> &IC, Graph &goG, unsigned int i,
 
 //////////////////////////////////////////////////////////////////////
 
+void storeTermCentricAnn(vector<vector<string> > &termCentric,
+			 string annFileName,
+                         unordered_map<string, unsigned int> nodeHash,
+			 unsigned int &totSize)
+{
+
+  string line;
+
+  // open the input file
+  fstream termFile;
+  termFile.open(annFileName, fstream::in);
+
+  // complain if the file doesn't exist
+  if (! termFile.good()) {
+    cerr << "Can't open " << annFileName << endl;
+    exit(1);
+  }
+  
+  // process each gene
+  set <string> allGenes;
+  while (getline(termFile, line)) {
+
+    vector<string> tokens;
+    istringstream iss(line);
+
+    string gene;
+    iss >> gene;
+
+    allGenes.insert(gene);
+
+    do {
+      string term;
+      iss >> term;
+      if (term != "") {
+        termCentric[nodeHash[term]].push_back(gene);
+      }
+    }
+    while (iss);
+  }
+
+  totSize = allGenes.size();
+  
+  // close the file
+  termFile.close();
+}
+
+//////////////////////////////////////////////////////////////////////
+
 Parameters::Parameters(char **argv, int argc)
 {
   // parse the command-line arguments
@@ -226,6 +370,10 @@ Parameters::Parameters(char **argv, int argc)
   annotationsFileName = getCmdOption(argv, argv + argc, "-a");
   outFileName = getCmdOption(argv, argv + argc, "-o");
   indexType = getCmdOption(argv, argv + argc, "-t");
+
+  if (cmdOptionExists(argv, argv + argc, "-f")) {
+    enrichFileName = getCmdOption(argv, argv + argc, "-f");
+  }
 
   if (indexType != "Resnik" && indexType != "Lin") {
     cerr << "The index type must be one of [Resnik, Lin]" << endl;
@@ -262,35 +410,38 @@ int main(int argc, char **argv)
   storeTermCentricAnn(termCentricAnn, p.annotationsFileName, nodeHash,
 		      totSize);
 
-  // compute the term frequency
+  // define the frequency and IC vectors
   vector<unsigned int> freq(termCentricAnn.size());
-  calculateFreq(freq, termCentricAnn, goG);
-
-  // compute the Information Content (IC) of each term
   vector<double> IC(freq.size());
-  calculateIC(IC, freq, totSize);
 
-  // calculate and print the semantic similarity
-  // between pairs of terms
-  fstream outFile;
-  outFile.open(p.outFileName, fstream::out);
-  outFile << std::scientific;
-  for (unsigned int i = 0; i < IC.size() - 1; i++) {
-    if (IC[i] <= 0) {
-      continue;
-    }
-    cout << i << endl;
-    for (unsigned int j = i + 1; j < IC.size(); j++) {
-      if (IC[j] <= 0) {
-	continue;
-      }
-      double semSim = semanticSim(IC, goG, i, j, p.indexType);
-      outFile << revNodeHash[i] << "\t" << revNodeHash[j] << "\t" <<
-	semSim << endl;
-    }
+  // process only the target set
+  if (p.enrichFileName.compare(string("")) != 0) {
+
+    // read the target set
+    set<unsigned int> targetTerms;
+    readEnrich(p.enrichFileName, nodeHash, targetTerms);
+    
+    // compute the term frequency
+    calculateFreqTarget(freq, targetTerms, termCentricAnn, goG);
+    
+    // compute the Information Content (IC) of each term
+    calculateIC(IC, freq, totSize);
+
+    // compute the pairwise similarity of the target terms
+    calcTargetSemSim(targetTerms, p.outFileName, p.indexType, IC, goG,
+		     revNodeHash);
   }
+  else { // process all pairs of terms
+    
+    // compute the term frequency
+    calculateFreq(freq, termCentricAnn, goG);
 
-  outFile.close();
+    // compute the Information Content (IC) of each term
+    calculateIC(IC, freq, totSize);
+
+    // compute the pairwise similarity of all terms
+    calcAllSemSim(p.outFileName, p.indexType, IC, goG, revNodeHash);
+  }
   
   return 0;
 }

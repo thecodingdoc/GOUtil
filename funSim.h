@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////
 // funSim.h  Copyright (c) 2017 Dario Ghersi                        //
-// Version:  20171214                                               //
+// Version:  20171213                                               //
 // Goal:     semantic similarity functions                          //
 //                                                                  //
 // This file is part of the GOUtil suite.                           //
@@ -23,7 +23,7 @@
 // CONSTANTS                                                        //
 //////////////////////////////////////////////////////////////////////
 
-const string USAGE = "\nUsage:\nfunSim -e EDGE_LIST -a ANNOTATIONS -o OUTFILE -t INDEX_TYPE\n";
+const string USAGE = "\nUsage:\nfunSim -e EDGE_LIST -a ANNOTATIONS -o OUTFILE -t INDEX_TYPE [-f ENRICH_OUTPUT]\n";
 
 
 //////////////////////////////////////////////////////////////////////
@@ -36,6 +36,7 @@ class Parameters {
   char *edgesFileName;
   string annotationsFileName;
   string outFileName;
+  string enrichFileName;
   string indexType;
 
   Parameters(char **, int);
@@ -45,10 +46,21 @@ class Parameters {
 // PROTOTYPES                                                       //
 //////////////////////////////////////////////////////////////////////
 
-
-void calculateFreq(vector<unsigned int> &, vector<vector<string> >,
+void calcAllSemSim(string, string, vector<double> &IC, Graph &,
+		   unordered_map<unsigned int, string> &);
+void calculateFreq(vector<unsigned int> &, vector<vector<string> > &,
 		   Graph );
+void calculateFreqTarget(vector<unsigned int> &,
+			 set<unsigned int> &,
+			 vector<vector<string> > &,
+			 Graph);
+void calculateIC(vector<double> &, vector<unsigned int> &,
+		 unsigned int);
 void checkCommandLineArgs(char **, int);
+void readEnrich(string,  unordered_map<string, unsigned int> &,
+		set<unsigned int> &);
+double semanticSim(vector<double> &, Graph &, unsigned int ,
+		   unsigned int, string);
 void storeTermCentricAnn(vector<vector<string> > &, string,
                          unordered_map<string, unsigned int>,
 			 unsigned int &);
