@@ -38,7 +38,7 @@ def getDistMat(semSimFileName):
     if previousGO != go1:
       allGO.append(go1)
     previousGO = go1
-    
+
     semDist = 1.0 - float(semSim)
     semDistList.append(semDist)
 
@@ -47,7 +47,7 @@ def getDistMat(semSimFileName):
 
   ## build a distance matrix
   distMat = squareform(semDistList)
-  
+
   return distMat, allGO
 
 ######################################################################
@@ -59,9 +59,9 @@ def printResults(outFileName, allGO, pos):
 
   outFile = open(outFileName, "w")
   for i in range(len(pos)):
-    outFile.write("%s\t%.3f %.3f\n" % (allGO[i], pos[i][0], pos[i][1])) 
+    outFile.write("%s\t%.3f\t%.3f\n" % (allGO[i], pos[i][0], pos[i][1])) 
   outFile.close()
-  
+
 ######################################################################
 # MAIN PROGRAM                                                       #
 ######################################################################
