@@ -3,7 +3,7 @@
 ######################################################################
 # spectralClustering.py                                              #
 # Author:  Dario Ghersi                                              #
-# Version: 20171218                                                  #
+# Version: 20171221                                                  #
 # Usage:   ./spectralClustering.py MDS_XY OUTFILE NUM_CLUSTERS       #
 ######################################################################
 
@@ -109,6 +109,7 @@ numCl = int(numCl)
 affMat, distMat, allGO = getAffMat(mdsXYFileName)
 
 ## perform spectral clustering on the distance matrix
+numpy.random.seed(1)
 sc = SpectralClustering(n_clusters=numCl, affinity='precomputed')
 sc.fit(affMat)
 labels = sc.labels_
