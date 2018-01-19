@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////
-// GOUtil.C  Copyright (c) 2017 Dario Ghersi                        //
-// Version: 20171213                                                //
+// GOUtil.C  Copyright (c) 2018 Dario Ghersi                        //
+// Version: 20180119                                                //
 // Goal: Enrichment Analysis tools                                  //    
 // Usage: GOUtil -e EDGE_LIST -a ANNOTATIONS -b BACKGROUND          //
 //               -t TARGET -o OUTFILE [-u]                          //
@@ -271,13 +271,14 @@ void EnrichedTerms::printResults(string outFileName, double threshold,
       for (set<string>::iterator it =
 	     withTerm[termIndex[sortedOrder[i]]].begin();
 	   it != withTerm[termIndex[sortedOrder[i]]].end(); it++) {
-	if (isFirst) {
-	  isFirst = false;
-	  outFile << *it;
-	}
-	else {
-	  outFile << " " << *it;
-	}
+
+    	  if (isFirst) {
+	       isFirst = false;
+	       outFile << *it;
+	      }
+	      else {
+	        outFile << " " << *it;
+	      }
       }
       outFile << endl;
     }
@@ -467,8 +468,20 @@ int main(int argc, char **argv)
   enrichTerms.addID(revNodeHash);
   enrichTerms.fdrCorrection();
 
+  // check whether there is anything to print
+  bool toPrint = false;
+  for (vector<double>::iterator it = enrichTerms.adjustedP.begin();
+                                it != enrichTerms.adjustedP.end(); it++) {
+    if (*it < p.threshold) {
+      toPrint = true;
+      break;
+    }
+  }
+
   // print the results
-  enrichTerms.printResults(p.outFileName, p.threshold, definition);
- 
+  if (toPrint) {
+    enrichTerms.printResults(p.outFileName, p.threshold, definition);
+  }
+
   return 0;
 }
