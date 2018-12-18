@@ -35,10 +35,11 @@ g++ -O3 -o funSim funSim.C utilities.C --std=gnu++11
 To perform enrichment analysis calculations, run the `enrich` program as follows:
 
 ```bash
-./enrich -a data/annHuman20171106.txt -e data/edgeList.txt -t data/target.txt -b data/background.txt -o output.txt
+git clone https://github.com/MLHale/GOUtildata.git
+./enrich -a GOUtildata/jan-2018/ann.hsa.bp.txt -e GOUtildata/jan-2018/edgeList.bp.txt -t GOUtildata/jan-2018/target.txt -b GOUtildata/jan-2018/background.hsa.bp.txt -o target_output_2018.txt -p 0.05
 ```
 
-The annHuman20171106.txt contains Gene Ontology annotations
+The annotation file ann.hsa.bp.txt contains Gene Ontology annotations
 with the following structure:
 
 ```text
