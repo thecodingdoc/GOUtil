@@ -35,7 +35,9 @@ g++ -O3 -o funSim funSim.C utilities.C --std=gnu++11
 To perform enrichment analysis calculations, run the `enrich` program as follows:
 
 ```bash
+## downloading dataset for input to enrich program##
 git clone https://github.com/MLHale/GOUtildata.git
+
 ./enrich -a GOUtildata/jan-2018/ann.hsa.bp.txt -e GOUtildata/jan-2018/edgeList.bp.txt\
   -t GOUtildata/jan-2018/target.txt -b GOUtildata/jan-2018/background.hsa.bp.txt \
   -o target_output_2018.txt -p 0.05
