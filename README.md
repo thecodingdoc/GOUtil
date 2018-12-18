@@ -68,7 +68,8 @@ pairs of Gene Ontology terms, using either the Lin or the Resnik index.
 To run the calculations, use the following command:
 
 ```bash
-./funSim -a data/annHuman20171106.txt -e data/edgeList.txt -o output.txt -t INDEX_TYPE
+./funSim -a GOUtildata/jan-2018/ann.hsa.bp.txt -e GOUtildata/jan-2018/edgeList.bp.txt\
+  -o output.txt -t INDEX_TYPE
 ```
 
 where INDEX_TYPE is one of [Lin, Resnik]. If the optional `-f ENRICH_OUTPUT` is passed
@@ -98,5 +99,7 @@ docker-compose run enrich
 
 to provide alternate parameters:
 ```bash
-docker-compose run enrich ./enrich -a data/annHuman20171106.txt -e data/edgeList.txt -t data/target.txt -b data/background.txt -o output.txt
+docker-compose run enrich ./enrich -a GOUtildata/jan-2018/ann.hsa.bp.txt -e GOUtildata/jan-2018/edgeList.bp.txt\
+  -t GOUtildata/jan-2018/target.txt -b GOUtildata/jan-2018/background.hsa.bp.txt \
+  -o target_output_2018.txt -p 0.05
 ```
