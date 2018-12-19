@@ -1,5 +1,5 @@
-# GOUtil v0.2 -- 12/13/17
-Copyright (c) 2017  Dario Ghersi, Matt L. Hale, Ishwor Thapa.
+# GOUtil v0.3
+Copyright (c) 2018  Dario Ghersi, Matt L. Hale, Ishwor Thapa.
 
 ## Purpose
 
