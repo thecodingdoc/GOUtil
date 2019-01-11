@@ -51,11 +51,14 @@ GENE1 TERM1 TERM2 ...
 GENE2 TERM1 TERM3 TERM6 ...
 ...
 ```
+`extractAnnotations.py` script can be used to generate this format of annotation file. 
+It requires GO annotation input file from http://geneontology.org/page/download-go-annotations
+
 `edgeList.txt` describes the Gene Ontology graph with a list of
 child-parent directed edges and is obtained by running the
-`buildEdgeList.py` script on a Gene Ontology obo file.
+`buildEdgeList.py` script on a Gene Ontology obo file. 
 
-`target.txt` and background.txt contain the target gene list and
+`target.txt` and `background.txt` contain the target gene list and
 the background gene list, respectively.
 
 `output.txt` is the name of the file where the results will be stored.
