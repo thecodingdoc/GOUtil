@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////
-// funSim.h  Copyright (c) 2017 Dario Ghersi                        //
-// Version:  20171213                                               //
+// funSim.h  Copyright (c) 2019 Dario Ghersi                        //
+// Version:  20190219                                               //
 // Goal:     semantic similarity functions                          //
 //                                                                  //
 // This file is part of the GOUtil suite.                           //
@@ -61,6 +61,7 @@ void readEnrich(string,  unordered_map<string, unsigned int> &,
 		set<unsigned int> &);
 double semanticSim(vector<double> &, Graph &, unsigned int ,
 		   unsigned int, string);
+double semanticValue(set<unsigned int> &, vector<double> &);
 void storeTermCentricAnn(vector<vector<string> > &, string,
                          unordered_map<string, unsigned int>,
 			 unsigned int &);

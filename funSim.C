@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////
-// funSim.C  Copyright (c) 2017 Dario Ghersi                        //
-// Version:  20171213                                               //
+// funSim.C  Copyright (c) 2019 Dario Ghersi                        //
+// Version:  20190219                                               //
 // Goal:     semantic similarity functions                          //
 //                                                                  //
 // This file is part of the GOUtil suite.                           //
@@ -35,6 +35,40 @@ using namespace std;
 
 //////////////////////////////////////////////////////////////////////
 // DEFINITIONS                                                      //
+//////////////////////////////////////////////////////////////////////
+
+void calcAllSemSim(string outFileName, string indexType,
+		   vector<double> &IC,
+		   Graph &goG,
+		   unordered_map<unsigned int, string> &revNodeHash)
+{
+  // calculate the pairwise semantic similarity between all pairs
+  // of terms
+
+  // calculate and print the semantic similarity
+  // between pairs of terms
+  fstream outFile;
+  outFile.open(outFileName, fstream::out);
+  outFile << std::scientific;
+    
+  for (unsigned int i = 0; i < IC.size() - 1; i++) {
+    if (IC[i] <= 0) {
+      continue;
+    }
+    cout << i << endl;
+    for (unsigned int j = i + 1; j < IC.size(); j++) {
+      if (IC[j] <= 0) {
+	continue;
+      }
+      double semSim = semanticSim(IC, goG, i, j, indexType);
+      outFile << revNodeHash[i] << "\t" << revNodeHash[j] << "\t" <<
+	semSim << endl;
+    }
+  }
+
+  outFile.close();
+}
+
 //////////////////////////////////////////////////////////////////////
 
 void calculateFreq(vector<unsigned int> &freq,
@@ -107,38 +141,20 @@ void calculateFreqTarget(vector<unsigned int> &freq,
   
 //////////////////////////////////////////////////////////////////////
 
-void calcAllSemSim(string outFileName, string indexType,
-		   vector<double> &IC,
-		   Graph &goG,
-		   unordered_map<unsigned int, string> &revNodeHash)
+void calculateIC(vector<double> &IC, vector<unsigned int> &freq,
+		 unsigned int totSize)
 {
-  // calculate the pairwise semantic similarity between all pairs
-  // of terms
 
-  // calculate and print the semantic similarity
-  // between pairs of terms
-  fstream outFile;
-  outFile.open(outFileName, fstream::out);
-  outFile << std::scientific;
-    
-  for (unsigned int i = 0; i < IC.size() - 1; i++) {
-    if (IC[i] <= 0) {
-      continue;
+  for (unsigned int i = 0; i < freq.size(); i++) {
+    if (freq[i] > 0) {
+      IC[i] = abs(-log10(float(freq[i]) / totSize));
     }
-    cout << i << endl;
-    for (unsigned int j = i + 1; j < IC.size(); j++) {
-      if (IC[j] <= 0) {
-	continue;
-      }
-      double semSim = semanticSim(IC, goG, i, j, indexType);
-      outFile << revNodeHash[i] << "\t" << revNodeHash[j] << "\t" <<
-	semSim << endl;
+    else {
+      IC[i] = -1.0;
     }
   }
-
-  outFile.close();
 }
-  
+
 //////////////////////////////////////////////////////////////////////
 
 void calcTargetSemSim(set<unsigned int> &targetTerms,
@@ -174,22 +190,6 @@ void calcTargetSemSim(set<unsigned int> &targetTerms,
   }
 
   outFile.close();
-}
-
-//////////////////////////////////////////////////////////////////////
-
-void calculateIC(vector<double> &IC, vector<unsigned int> &freq,
-		 unsigned int totSize)
-{
-
-  for (unsigned int i = 0; i < freq.size(); i++) {
-    if (freq[i] > 0) {
-      IC[i] = -log10(float(freq[i]) / totSize);
-    }
-    else {
-      IC[i] = -1.0;
-    }
-  }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -270,7 +270,7 @@ double semanticSim(vector<double> &IC, Graph &goG, unsigned int i,
 
   // deal with identical terms
   if (i == j) {
-    if (indexType == "Lin") {
+    if (indexType == "Lin" || indexType == "AIC") {
       return(1.0);
     }
     else if (indexType == "Resnik") {
@@ -287,29 +287,60 @@ double semanticSim(vector<double> &IC, Graph &goG, unsigned int i,
   set_intersection(ancA.begin(), ancA.end(), ancB.begin(), ancB.end(),
                    inserter(commonAnc, commonAnc.begin()));
 
-  // find the IC of the Most Informative Common Ancestor
-  double ICMICA = -1.0;
-  for (set<unsigned int>::iterator it = commonAnc.begin();
-       it != commonAnc.end(); it++) {
-    if (ICMICA < IC[*it]) {
-      ICMICA = IC[*it];
+  if (indexType == "Resnik" || indexType == "Lin") {
+    // find the IC of the Most Informative Common Ancestor
+    double ICMICA = -1.0;
+    
+    for (set<unsigned int>::iterator it = commonAnc.begin();
+         it != commonAnc.end(); it++) {
+      if (ICMICA < IC[*it]) {
+        ICMICA = IC[*it];
+      }
     }
-  }
 
-  // return the semantic similarity
-  if (indexType == "Resnik") {
-    semanticSim = ICMICA;
+    // return the semantic similarity
+    if (indexType == "Resnik") {
+      semanticSim = ICMICA;
+    }
+    else if (indexType == "Lin") {
+      if (IC[i] > 0 && IC[j] > 0) {
+        semanticSim = 2 * ICMICA / (IC[i] + IC[j]);
+      }
+      else {
+        return -1;
+      }
+    }
   }
-  else if (indexType == "Lin") {
-    if (IC[i] > 0 && IC[j] > 0) {
-      semanticSim = 2 * ICMICA / (IC[i] + IC[j]);
+  else if (indexType == "AIC") {
+    double svA = semanticValue(ancA, IC);
+    double svB = semanticValue(ancB, IC);
+    double sw = 0.0;
+
+    for (set<unsigned int>::iterator it = commonAnc.begin();
+         it != commonAnc.end(); it++) {
+      sw = 1.0 / (1.0 + exp(-1.0 / IC[*it]));
+      semanticSim += 2 * sw;
     }
-    else {
-      return -1;
-    }
+
+    semanticSim /= (svA + svB);
   }
   
   return semanticSim;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+double semanticValue(set<unsigned int> &setT, vector<double> &IC)
+{
+  // auxiliary function for the AIC semantic index
+
+  double sv = 0.0;
+  for (set<unsigned int>::iterator it = setT.begin();
+         it != setT.end(); it++) {
+    sv += 1.0 / (1.0 + exp(-1.0 / IC[*it]));
+  }
+
+  return sv;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -375,8 +406,9 @@ Parameters::Parameters(char **argv, int argc)
     enrichFileName = getCmdOption(argv, argv + argc, "-f");
   }
 
-  if (indexType != "Resnik" && indexType != "Lin") {
-    cerr << "The index type must be one of [Resnik, Lin]" << endl;
+  if (indexType != "Resnik" && indexType != "Lin" &&
+      indexType != "AIC") {
+    cerr << "The index type must be one of [Resnik, Lin, AIC]" << endl;
     exit(1);
   }
 }
