@@ -3,13 +3,17 @@
 ######################################################################
 # spectralClustering.py                                              #
 # Author:  Dario Ghersi                                              #
-# Version: 20171221                                                  #
+# Version: 20190223                                                  #
 # Usage:   ./spectralClustering.py MDS_XY OUTFILE NUM_CLUSTERS       #
+# Note:    if NUM_CLUSTERS is -1 (i.e., not specified by the user),  #
+#          the script uses the eigengap heuristic to determine       #
+#          the "optimal" number of clusters as proposed in           #
+#          Luxburg (tutorial on spectral clustering)                 #
 ######################################################################
 
-import numpy
+import numpy as np
 import math
-from scipy.spatial.distance import squareform
+import scipy
 from sklearn.cluster import SpectralClustering
 import sys
 
@@ -18,9 +22,43 @@ import sys
 ######################################################################
 
 ALPHA = 1 # parameter for the kernel function
+KMAX = 10 # maximum number of clusters
 
 ######################################################################
 # FUNCTIONS                                                          #
+######################################################################
+
+def eigenGapHeuristic(affMat, maxK=20):
+  """
+  compute the eigengap heuristic to estimate the "optimal" number of
+  clusters, following von Luxburg
+  """
+
+  ## compute the laplacian
+  L = np.identity(np.size(affMat, 1)) - affMat
+  
+  ## compute the eigenvalues of the laplacian
+  w, v = np.linalg.eig(L)
+
+  ## sort the eigenvalues
+  w.sort()
+
+  ## compute the eigengap
+  k = min(maxK, len(w))
+  if k == 1:
+    return 1
+  else:
+    gaps = np.diff(w[:k])
+
+    maxG = gaps[0]
+    numCl = 2
+    for i in range(1, k-1):
+      if gaps[i] > maxG:
+        maxG = gaps[i]
+        numCl = i + 2
+      
+  return numCl
+  
 ######################################################################
 
 def findMedoids(distMat, labels):
@@ -36,7 +74,7 @@ def findMedoids(distMat, labels):
   for index in clusterIndices:
       
     # find the members of the cluster
-    membInd = numpy.where([x == index for x in labels])
+    membInd = np.where([x == index for x in labels])
 
     # calculate the average distance of a member against all members
     avgDist = []
@@ -48,15 +86,16 @@ def findMedoids(distMat, labels):
       dist /= len(distMat)
       avgDist.append(dist)
 
-    medoids.append(membInd[0][numpy.argmin(avgDist)])
+    medoids.append(membInd[0][np.argmin(avgDist)])
     
   return medoids
 
 ######################################################################
 
-def getAffMat(mdsXYFileName):
+def getAffMat(mdsXYFileName, nn=5):
   """
-  compute the affinity matrix for spectral clustering
+  compute a locally adapted affinity matrix for spectral clustering.
+  nn is the parameter for the nearest neighbor
   """
 
   ## store the XY
@@ -74,24 +113,30 @@ def getAffMat(mdsXYFileName):
     
   mdsXYFile.close()
 
+  ## make sure nn is not larger than the number of points
+  nn = min(nn, len(xyCoords))
+
+  ## z-score normalize the data
+  xyCoords = np.array(xyCoords)
+  xyCoords = scipy.stats.zscore(xyCoords, axis=0)
+
   ## compute the distance matrix
-  numTerms = len(xyCoords)
-  for i in range(numTerms - 1):
-    x1 = xyCoords[i][0]
-    y1 = xyCoords[i][1]
+  distMat = scipy.spatial.distance_matrix(xyCoords, xyCoords)
+
+  ## compute the sigmas
+  sigmas = []
+  for i in range(distMat.shape[0]):
+    temp = np.copy(distMat[i])
+    temp.sort()
+    sigmas.append(np.median(temp[:nn]))
+  
+  ## compute the sigma matrix
+  sigmaMat = np.matrix(sigmas)
+  sigmaMat = np.matmul(np.transpose(sigmaMat), sigmaMat)
     
-    for j in range(i + 1, numTerms):
-      x2 = xyCoords[j][0]
-      y2 = xyCoords[j][1]
+  ## build the kernel function
+  affMat = np.exp(-np.square(distMat) / sigmaMat)
 
-      euclD = math.sqrt((x1 - x2)**2 + (y1 - y2)**2)
-      d = math.exp(-ALPHA * euclD)
-      distMat.append(euclD)
-      affMat.append(d)
-
-  distMat = squareform(distMat)
-  affMat = squareform(affMat)
-   
   return affMat, distMat, allGO
 
 ######################################################################
@@ -106,18 +151,23 @@ mdsXYFileName, outFileName, numCl = sys.argv[1:]
 numCl = int(numCl)
 
 ## get the distance matrix
-affMat, distMat, allGO = getAffMat(mdsXYFileName)
+affMat, distMat, allGO = getAffMat(mdsXYFileName, nn=10)
+
+## if the number of clusters is not specified (-1) use the
+## eigengap heuristic to predict the "optimal" number of clusters
+if numCl < 1:
+  numCl = eigenGapHeuristic(affMat)
 
 ## perform spectral clustering on the distance matrix
-numpy.random.seed(1)
-sc = SpectralClustering(n_clusters=numCl, affinity='precomputed')
+sc = SpectralClustering(n_clusters=numCl, affinity='precomputed',
+                        assign_labels="discretize")
 sc.fit(affMat)
 labels = sc.labels_
 
 ## find the medoids
 medoids = findMedoids(distMat, labels)
 
-## print the results  for index in cluster
+## print the results for index in cluster
 outfile = open(outFileName, "w")
 for i in range(len(allGO)):
   outfile.write(allGO[i] + "\t" + str(labels[i]) + "\t" +
