@@ -77,7 +77,7 @@ To run the calculations, use the following command:
   -o output.txt -t INDEX_TYPE
 ```
 
-where INDEX_TYPE is one of [Lin, Resnik]. If the optional `-f ENRICH_OUTPUT` is passed
+where INDEX_TYPE is one of [Lin, Resnik, AIC]. If the optional `-f ENRICH_OUTPUT` is passed
 to the program, then `funSim` only computes the semantic similarity between terms in the
 enrichment output.
 
