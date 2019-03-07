@@ -3,7 +3,7 @@
 ######################################################################
 # spectralClustering.py                                              #
 # Author:  Dario Ghersi                                              #
-# Version: 20190223                                                  #
+# Version: 20190307                                                  #
 # Usage:   ./spectralClustering.py MDS_XY OUTFILE NUM_CLUSTERS       #
 # Note:    if NUM_CLUSTERS is -1 (i.e., not specified by the user),  #
 #          the script uses the eigengap heuristic to determine       #
@@ -150,6 +150,9 @@ if len(sys.argv) != 4:
 mdsXYFileName, outFileName, numCl = sys.argv[1:]
 numCl = int(numCl)
 
+## initialize the random number generator
+
+
 ## get the distance matrix
 affMat, distMat, allGO = getAffMat(mdsXYFileName, nn=10)
 
@@ -160,7 +163,7 @@ if numCl < 1:
 
 ## perform spectral clustering on the distance matrix
 sc = SpectralClustering(n_clusters=numCl, affinity='precomputed',
-                        assign_labels="discretize")
+                        assign_labels="discretize", random_state=1)
 sc.fit(affMat)
 labels = sc.labels_
 
