@@ -3,13 +3,13 @@
 ######################################################################
 # buildEdgeList.py                                                   # 
 # Author:  Dario Ghersi                                              #
-# Version: 20210826                                                  #
+# Version: 20210831                                                  #
 # Goal:    Parses the go.obo file and outputs all the child-parent   #
 #          relationships in a given namespace (one of                #
 #          biological_process, molecular_function or                 #
 #          cellular_component).                                      #
-# N.B.:    Types of relationship include: 'is_a', 'part_of',         #
-#          and 'has_part' relations.                                 #
+# N.B.:    Types of relationship include: 'is_a', and 'part_of'      #
+#          relationships.                                            #
 # Usage:   ./buildEdgeList.py go.obo namespace outputFile            #
 ######################################################################
 
@@ -78,10 +78,6 @@ with open(oboFileName, "r") as oboFile:
         ## "part_of" relationship
         if line[:21] == "relationship: part_of":
             parents.append(line.split("part_of")[1].split("!")[0].strip())
-
-        ## "has_part" relationship
-        if line[:22] == "relationship: has_part":
-            parents.append(line.split("has_part")[1].split("!")[0].strip())
 
 ## add the last term
 if termID != "" and ns == namespace:
